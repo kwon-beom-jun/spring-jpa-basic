@@ -1,7 +1,10 @@
 # 🌱 JPA 동작 원리 &amp; 객체 및 DB 테이블 올바른 설계, 매핑
 
-- Database : H2
+<br>
+
 - IDE : Intellij
+- Database : H2 2.2.224
+- JPA : Hibernate 5.3.10.Final
 
 <br><br>
 
