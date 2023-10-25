@@ -30,6 +30,12 @@
       <version>2.2.224</version>
     </dependency>
 
+    <!-- jaxb는 Java 1.8 까지만 지원 → Java 11부터는 지원 X -->
+    <dependency>
+      <groupId>javax.xml.bind</groupId>
+      <artifactId>jaxb-api</artifactId>
+      <version>2.3.0</version>
+    </dependency>
 
   </dependencies>
 
