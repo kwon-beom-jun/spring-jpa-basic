@@ -4,13 +4,14 @@ import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
 import javax.persistence.Persistence;
+import java.util.List;
 
 /**
  * <br> TODO : JPA 구동 방식
  * <br>     1. Persistence 클래스에서 시작
  * <br>     2. persistence.xml 설정 정보를 읽어드림
  * <br>     3. 읽어드린 정보를 바탕으로 EntityManagerFactory라는 클래스를 만듬
- * <br>         3-1. EntityManagerFactory는 어플리케이션 로딩 시점에 하나만 생성
+ * <br>         3-1. EntityManagerFactory는 어플리케이션 로딩 시점에 하나만 생성 (DB당 하나씩 생성)
  * <br>     4. EntityManagerFactory에서 무언가 필요할때마다 EntityManager를 찍어내서 구동
  * <br>
  * <br> TODO : H2 데이터베이스
@@ -45,6 +46,12 @@ import javax.persistence.Persistence;
  * <br>         H2-DB.bat 사용하여 H2 콘솔을 사용 중 JPA를 사용하면 에러발생
  * <br>             → H2는 기본적으로 한번에 하나의 프로세스에서만 데이터베이스 파일에 접근 할 수 있도록 파일을 잠금
  * <br>             → 동시에 여러 프로세스가 데이터베이스 파일에 변경을 가할 때 데이터 손상을 방지하기 위함
+ * <br>
+ * <br> TODO : 실행 시 콘솔(persistence.xml 옵션)
+ * <br>     hibernate.showsql : 콘솔에 쿼리가 보임
+ * <br>     hibernate.format_sql : 쿼리가 포맷되어 콘솔에 보임
+ * <br>     hibernate.use_sql_comments : 쿼리의 주석 부분
+ * <br>
  */
 public class JpaMain {
     public static void main(String[] args) {
@@ -52,35 +59,124 @@ public class JpaMain {
         // Persistence 클래스에서 persistence.xml 설정 정보를 읽어드림
         // persistence.xml 설정정보에서 전달인자로 보내준 persistence-unit 네임을 조회
         // 조회된 설정을 바탕으로 EntityManagerFactory를 생성
-        // EntityManagerFactory 만드는 순간 데이터베이스와 연결되 다 되고 웬만한것들이 전부 가능함
+        // EntityManagerFactory 만드는 순간 데이터베이스와 연결되고 웬만한것들이 전부 가능함
         EntityManagerFactory emf = Persistence.createEntityManagerFactory("hello");
 
-        // 트랜잭션(db 커넥션 얻고 쿼리를 날리고 종료되는 일관적인 단위) 단위마다 EntityManager를 만들어야함
-        // JPA에서는 트랜잭션 단위가 많이 중요
-        // JPA에서는 데이터를 변경하는 모든 작업은 트랜잭션안에서 작업을 해야함
-        // EntityManager는 정말 쉽게 DB 커넥션 하나 받았다고 생각하면 편함
+        /**
+         * <br> TODO : EntityManager
+         * <br>     JPA에서는 트랜잭션 단위가 많이 중요함
+         * <br>     트랜잭션(db 커넥션 얻고 쿼리를 날리고 종료되는 일관적인 단위) 단위마다 EntityManager를 만들어야함
+         * <br>     JPA에서는 데이터를 변경하는 모든 작업은 트랜잭션안에서 작업을 해야함
+         * <br>     EntityManager는 정말 쉽게 DB 커넥션 하나 받았다고 생각하면 편함
+         * <br>
+         * <br> TODO : ※ EntityManager 중요! ※
+         * <br>     쓰레드간에 공유는 절대 하면 안됌 (사용 후 폐기)
+         * <br>         → ex) JPA Update : 커밋 시점에 엔터티 체크하여 자동 업데이트 처리
+         * <br>         →     (한 스레드에서의 변경이 다른 스레드의 작업에 영향을 줄 수 있음)
+         * <br>         → ex) 스레드들이 동시에 commit을 시도할 때 트랜잭션 충돌이 발생할 수 있음
+         * <br>     JPA의 모든 데이터 변경은 트랜잭션 안에서 실행
+         * <br>         → 원래 DB는 데이터 변경 자체를 트랜잭션 안에서 실행하도록 설계
+         * <br>         → DB는 트랜잭션이라는 개념을 단권 커리가 올 때마다 내부적으로 처리
+         * <br>         → DB는 내부적으로 트랜잭션 개념을 가지고 있음
+         * <br>
+         */
         EntityManager em = emf.createEntityManager();
 
-        EntityTransaction tx = em.getTransaction();
-        tx.begin(); // 트랜잭션 시작
-
         // 트랜잭션 단위
-        Member member = new Member();
-        member.setId(2L);
-        member.setName("HelloA");
-        // 실행 시 콘솔(persistence.xml 옵션)
-        //      hibernate.showsql : 콘솔에 쿼리가 보임
-        //      hibernate.format_sql : 쿼리가 포맷되어 콘솔에 보임
-        //      hibernate.use_sql_comments : 쿼리의 주석 부분
-        em.persist(member);
-        
-        tx.commit(); // 트랜잭션 종료
+        // 단순 데이터 조회 같은 경우에는 트랜잭션 선언하지 않고 사용이 가능함
+        EntityTransaction tx = em.getTransaction();
 
-        // 문제가 생기면 RollBack 사용
-        // tx.rollback();
+        // 트랜잭션 시작
+        tx.begin();
 
-        em.close();
-        // 어플리케이션이 끝나면 EntityManagerFactory를 닫아줘야함
-        emf.close();
+        try {
+
+            // ======================== Create Ex =========================
+
+            Member member = new Member();
+            member.setId(1L);
+            member.setUserName("HelloA");
+
+            em.persist(member);
+
+            // ========================= Read Ex ==========================
+
+            Member findMember = em.find(Member.class, 1L);
+            System.out.println("findMember.id = " + findMember.getId());
+            System.out.println("findMember.name = " + findMember.getUserName());
+
+            // ======================== Update Ex =========================
+
+            /**
+             * <br> TODO : JPA Update
+             * <br>     em.persistence(저장)을 하지 않아도 됨
+             * <br>     JPA 목적 중 하나인 Java Collection 처럼 이용 할 수 있게 설계되어 있어서 가능함
+             * <br>     JPA를 통해서 엔티티를 가져오면 JPA가 관리를 함
+             * <br>     JPA가 트랜잭션을 커밋하는 시점에 체크를 해서 바뀌었으면 업데이트 쿼리를 보냄
+             * <br>     ( Delete가 있으면 실행이 되지 않는 이유 )
+             */
+            findMember.setUserName("HelloJPA");
+
+            findMember = em.find(Member.class, 1L);
+            System.out.println("findMember.id = " + findMember.getId());
+            System.out.println("findMember.name = " + findMember.getUserName());
+
+            // ========================= Jpql Ex ==========================
+
+            /**
+             * <br> TODO : Jpql이란? (Jpql이란, 예시, 등장 배경 ... 등)
+             * <br>     객체를 대상으로 하는 객체지향 SQL
+             * <br>     SQL을 추상화한 JPQL이라는 객체 지향 쿼리 언어
+             * <br>     SQL과 문법 유사, SELECT, FROM, WHERE, GROUP BY, HAVING, JOIN 지원
+             * <br>     JPQL은 엔티티 객체를 대상으로 쿼리 ↔ SQL은 데이터베이스 테이블을 대상으로 쿼리
+             * <br>
+             * <br>     장점 : 방언을 바꾸더라도 Jqpl을 변경 할 필요가 없음
+             * <br>
+             * <br>     Jpql 등장 배경
+             * <br>         → JPA를 사용하면 엔티티 객체를 중심으로 개발
+             * <br>         → 검색 쿼리
+             * <br>         → 검색을 할 때도 테이블이 아닌 엔티티 객체를 대상으로 검색
+             * <br>           (테이블이 아닌 객체인 이유는 JPA 사상이 깨짐)
+             * <br>         → 모든 DB 데이터를 객체로 변환해서 검색하는 것은 불가능
+             * <br>         → 어플리케이션이 필요한 데이터만 DB에서 불러오면 결국 검색 조건이 포함된 SQL이 필요
+             * <br>         → 테이블 대상으로 쿼리를 날리면 해당 DB에 종속적인 설계가 되어버리므로 entity 객체를
+             * <br>           대상으로 쿼리를 할 수 있는 Jpql이 등장
+             * <br>
+             * <br>     JPA는 테이블 대상으로 코드를 작성하지 않고 객체 대상으로 코드를 작성함
+             * <br>     select m from Member as m : Member 객체를 전부 가져오라는 쿼리 (콘솔(showsql)의 로그 확인)
+             */
+            List<Member> findMembers =
+                    em.createQuery("select m from Member as m", Member.class)
+                            // 페이징 처리
+                            .setFirstResult(1) // 1번부터
+                            .setMaxResults(10) // 10번까지
+                            .getResultList();
+
+            for (Member m : findMembers) {
+                System.out.println("member.name ===== " + member.getUserName());
+            }
+
+            // ======================== Delete Ex =========================
+
+//            em.remove(findMember);
+
+            // 트랜잭션 종료
+            tx.commit();
+
+        } catch (Exception e) {
+
+            // 문제가 생기면 RollBack 사용
+            tx.rollback();
+
+        } finally {
+
+            // EntityManager가 내부적으로 데이터베이스 커넥션을 물고 동작하므로 항상 끊어줘야함
+            em.close();
+
+            // 어플리케이션이 끝나면 EntityManagerFactory를 닫아줘야함
+            // 커넥션 풀링 등 내부적으로 리소스가 릴리즈됨
+            emf.close();
+
+        }
     }
 }

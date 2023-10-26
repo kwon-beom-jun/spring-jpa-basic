@@ -47,6 +47,7 @@
             <!-- 특정 데이터베이스에 종속되지 않는 역할 -->
             <!-- DB 방언(40가지 이상)들을 해석하기 위해 존재 -->
             <property name="hibernate.dialect" value="org.hibernate.dialect.H2Dialect"/>
+            <!--<property name="hibernate.dialect" value="org.hibernate.dialect.Oracle12cDialect"/>-->
             <!-- ================================================================= -->
 
 
@@ -62,7 +63,7 @@
             <property name="hibernate.use_sql_comments" value="true"/>
 
             <!-- application 실행 시 ddl 전략 -->
-            <!--<property name="hibernate.hbm2ddl.auto" value="create"/>-->
+            <property name="hibernate.hbm2ddl.auto" value="create"/>
             <!-- ================================================================= -->
 
 

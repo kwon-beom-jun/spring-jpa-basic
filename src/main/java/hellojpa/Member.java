@@ -1,17 +1,20 @@
 package hellojpa;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
 /**
- *  Entity, Id는 javax에 있는 클래스이고 표준
+ *  @Entity, @Id는 javax에 있는 클래스이고 표준
  */
 @Entity
+// @Table(name = "") 테이블 이름 지정 가능
 public class Member {
 
     @Id // PK
     private Long id;
-    private String name;
+    @Column(name = "name") // 컬럼 이름 지정 가능
+    private String userName;
 
     public Long getId() {
         return id;
@@ -21,11 +24,11 @@ public class Member {
         this.id = id;
     }
 
-    public String getName() {
-        return name;
+    public String getUserName() {
+        return userName;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setUserName(String userName) {
+        this.userName = userName;
     }
 }
