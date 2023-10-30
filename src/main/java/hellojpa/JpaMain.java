@@ -97,6 +97,11 @@ public class JpaMain {
             member.setId(1L);
             member.setUserName("HelloA");
 
+            /**
+             * <br> TODO : JPA persist
+             * <br>     persist()는 DB에 쿼리를 보내는것이 아닌 영속성 상태로 만드는것
+             * <br>     쿼리를 보내는 시점은 트랙잭션(EntityTransaction)이 커밋되는 시점
+             */
             em.persist(member);
 
             // ========================= Read Ex ==========================

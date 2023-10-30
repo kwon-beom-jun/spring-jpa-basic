@@ -1,0 +1,106 @@
+
+영속성 관리(JPA 내부 구조)
+
+
+
+JPA 간단한 구조
+    EnytityManagerFactory   → EntityManager1
+                            → EntityManager2    → conn  ↘
+                                                → conn  → DB
+                                                → conn  ↗
+                                                (커넥션풀)
+
+
+
+JPA에서 중요한 2가지
+    1. 객체와 관계형 데이터베이스 매핑하기(Object Relational Mapping)
+    2. 영속성 컨텍스트(엔티티를 영구 저장하는 환경)
+        EntityManager.persist(entity);
+        → persist 메소드는 DB에 저장하는것이 아닌 영속성 컨텍스트를 통해 엔티티를 영속화 한다는 뜻
+        → 엔티티 영속성 컨텍스트라는데 저장한다는 뜻
+
+
+
+엔티티 매니저(EntityManager)? 영속성 컨텍스트?
+    - 영속성 컨텍스트는 논리적인 개념
+    - 눈에 보이지 않는다
+    - 엔티티 매니저를 통해서 영속성 컨텍스트에 접근
+
+    J2SE 환경
+        엔티티 매니저와 영속성 컨텍스트가 1:1
+        EntityManager → PersistenceContext
+
+    J2EE, 스프링 프레임워크 같은 컨테이너 환경
+        엔티티 매니저와 영속성 컨택스트가 N:1
+        EntityManager   ↘
+        EntityManager   →   PersistenceContext
+        EntityManager   ↗
+
+
+
+엔티티의 생명주기(Entity Lifecycle)
+
+    비영속(new/transient)
+    - 영속성 컨택스트와 전혀 관계가 없는 새로운 상태
+      ex) 엔티티 Member.java 객체를 생성후 EntityManager에 등록하지 않은 상태
+          Member member = new Member();
+          member.setId("member1");
+          member.setUsername("회원1");
+
+    영속(managed)
+    - 영속성 컨텍스트에 관리되는 상태
+      ex) EntityManager.persist(Member 인스턴스); // 해당 시점이 영속상태라고 한다.
+          EntityManager em = emf.createEntityManager();
+          em.getTransaction().begin(); // em.getTransaction(); == EntityTransaction
+          em.persist(member); // 영속 컨텍스트(EntityManager)에 들어가면 영속상태
+
+    준영속(detached)
+    - 영속성 컨텍스트에 저장되었다가 분리, 준영속 상태
+      ex) em.detach(member); // 영속성 컨텍스트에서 지움
+          em.detach ↔ em.persist
+
+    삭제(removed)
+    - 삭제된 상태
+      ex) em.remove(member); // 실제 DB 삭제를 요청하는 상태, 실제 연구 저장을 어떤 데이터베이스에서 지우겠다는 상태
+
+
+
+영속성 컨텍스트의 이점
+    - 1차 캐시
+    - 동일성(identity) 보장
+    - 트랜잭션을 지원하는 쓰기 지연
+      (transactional write-behind)
+    - 변경 감지(Dirty Checking)
+    - 지연 로딩(Lazy Loading)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
