@@ -93,22 +93,41 @@ public class JpaMain {
 
             // ======================== Create Ex =========================
 
-            Member member = new Member();
-            member.setId(1L);
-            member.setUserName("HelloA");
-
             /**
              * <br> TODO : JPA persist
              * <br>     persist()는 DB에 쿼리를 보내는것이 아닌 영속성 상태로 만드는것
              * <br>     쿼리를 보내는 시점은 트랙잭션(EntityTransaction)이 커밋되는 시점
              */
+            Member member = new Member(1L, "HelloA");
             em.persist(member);
 
             // ========================= Read Ex ==========================
 
+            /**
+             * <br> TODO : JPA Read
+             * <br>     위의 em.persist(member)로 인해서 1L(키) Member(값) 객체가 1차 캐시에 들어감 
+             * <br>     → find 사용하여 조회시 1차 캐시에 있으므로 DB에서 조회하지 않고 1차 캐시에서 가져옴
+             * <br>     ( select가 console에 출력되지 않는 이유 )
+             * <br>
+             * <br>     em.persist(member)를 하지 않고 em.find()시에
+             * <br>     DB에서 조회해서 엔티티를 생성하고, 이를 1차 캐시에 저장
+             */
             Member findMember = em.find(Member.class, 1L);
             System.out.println("findMember.id = " + findMember.getId());
             System.out.println("findMember.name = " + findMember.getUserName());
+            Member findMember2 = em.find(Member.class, 1L);
+
+//            Member findMember1 = em.find(Member.class, 2L);
+//            Member findMember2 = em.find(Member.class, 2L);
+
+            /**
+             * <br> TODO : JPA Read (영속 엔티티의 동일성 보장)
+             * <br>     1차 캐시로 반복 가능한 읽기(REPEATABLE READ) 등급의 트랜잭션 격리 수준을
+             * <br>     데이터베이스가 아닌 어플리케이션에서 제공
+             * <br>     ( JPA가 영속 엔티티의 동일성을 보장 )
+             * <br>
+             */
+            System.out.println("findMember result == " + (findMember == findMember2));
 
             // ======================== Update Ex =========================
 
@@ -120,11 +139,11 @@ public class JpaMain {
              * <br>     JPA가 트랜잭션을 커밋하는 시점에 체크를 해서 바뀌었으면 업데이트 쿼리를 보냄
              * <br>     ( Delete가 있으면 실행이 되지 않는 이유 )
              */
-            findMember.setUserName("HelloJPA");
+            /*findMember.setUserName("HelloJPA");
 
             findMember = em.find(Member.class, 1L);
             System.out.println("findMember.id = " + findMember.getId());
-            System.out.println("findMember.name = " + findMember.getUserName());
+            System.out.println("findMember.name = " + findMember.getUserName());*/
 
             // ========================= Jpql Ex ==========================
 
@@ -150,7 +169,7 @@ public class JpaMain {
              * <br>     JPA는 테이블 대상으로 코드를 작성하지 않고 객체 대상으로 코드를 작성함
              * <br>     select m from Member as m : Member 객체를 전부 가져오라는 쿼리 (콘솔(showsql)의 로그 확인)
              */
-            List<Member> findMembers =
+            /*List<Member> findMembers =
                     em.createQuery("select m from Member as m", Member.class)
                             // 페이징 처리
                             .setFirstResult(1) // 1번부터
@@ -159,11 +178,13 @@ public class JpaMain {
 
             for (Member m : findMembers) {
                 System.out.println("member.name ===== " + member.getUserName());
-            }
+            }*/
 
             // ======================== Delete Ex =========================
 
-//            em.remove(findMember);
+            /*em.remove(findMember);*/
+
+            // ============================================================
 
             // 트랜잭션 종료
             tx.commit();
@@ -172,6 +193,7 @@ public class JpaMain {
 
             // 문제가 생기면 RollBack 사용
             tx.rollback();
+            System.out.println("ERROR : " + e);
 
         } finally {
 

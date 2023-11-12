@@ -64,6 +64,10 @@
 
             <!-- application 실행 시 ddl 전략 -->
             <property name="hibernate.hbm2ddl.auto" value="create"/>
+
+            <!-- hibernate 배치 크기 -->
+            <property name="hibernate.jdbc.batch_size" value="2"/>
+
             <!-- ================================================================= -->
 
 

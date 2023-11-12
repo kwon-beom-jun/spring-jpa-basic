@@ -39,13 +39,14 @@ JPA에서 중요한 2가지
 
 
 엔티티의 생명주기(Entity Lifecycle)
+    ( doc > img > 엔티티의 생명주기 참조 )
 
     비영속(new/transient)
     - 영속성 컨택스트와 전혀 관계가 없는 새로운 상태
       ex) 엔티티 Member.java 객체를 생성후 EntityManager에 등록하지 않은 상태
           Member member = new Member();
-          member.setId("member1");
-          member.setUsername("회원1");
+          member.setId(1L);
+          member.setUsername("A");
 
     영속(managed)
     - 영속성 컨텍스트에 관리되는 상태
@@ -74,19 +75,95 @@ JPA에서 중요한 2가지
     - 지연 로딩(Lazy Loading)
 
 
+    * 엔티티 조회, 1차 캐시
+        // 엔티티를 생성한 상태(비영속 상태)
+        Member member = new Member();
+        member.setId("1L");
+        member.setUsername("A");
+
+        // 엔티티 영속(1차 캐시에 저장됨)
+        em.persist(member);
+
+        영속 컨텍스트(entityManager) 내부에서 1차 캐시 키, 값으로 생성
+            @Id 1L (DB pk로 맵핑한것이 "키")
+            Entity member (Entity 객체 자체가 "값")
+
+        // 1차 캐시에서 조회
+        Member findMember1 = em.find(Member.class, 1L);
+        → find를 사용하면 DB에서 조회하기전 1차 캐시에서 "키" 조회
+        → 1차 캐시에 있으면 DB에서 조회하지 않고 1차 캐시에서 가져다 씀
+
+        // 1차 캐시에서 조회되지 않을경우
+        Member findMember2 = em.find(Member.class, 2L);
+        → 1차 캐시에 없을경우 DB에서 조회 후 1차 캐시에 2L "키" 값으로 저장
+        → 1L 값(객체 인스턴스)과 2L 값은 다른 값(인스턴스)
+            ※ 엔티티 매니저는 트랜잭션 단위로 동작
+              트랜잭션이 끝나면 1차 캐시도 지워지고 1차캐시에서 조회되지 않은 것은
+              1차캐시에 저장되는데 짧은 찰나의 순간에만 1차 캐시에 존재해서 큰 이점은 없음
+
+        애플리케이션 전체에서 공유하는 캐쉬는 JPA, Hibernate에서는 2차캐쉬라고 부름
 
 
+    * 동일성(identity) 보장
+        Member memberA = em.find(Member.class, 1L);
+        Member memberB = em.find(Member.class, 1L);
+        System.out.println(memberA == memberB); // true
 
 
+    * 트랜잭션을 지원하는 쓰기 지연
+        ( doc > img > 트랜잭션을 지원하는 쓰기 지연-1(-2) 참조 )
+        영속 컨텍스트 안에는 "1차 캐시" 말고도 "쓰기 지연 SQL 저장소"도 있음
+        버퍼링 같은 기능을 쓸 수 있음 ( == 배치 )
+        트랜잭션이 커밋되는 시점에 변경이 반영
+
+        EntityManager em = emf.createEntityManager();
+        EntityTransaction transaction = em.getTransaction();
+
+        // [트랜잭션] 시작
+        // 엔티티 매니저는 데이터 변경시 트랜잭션을 시작해야 한다
+        transaction.begin();
+
+        // INSERT BATCH
+        // INSERT SQL을 데이터베이스 보내지 않음
+        em.persist(new Member(1L, "A"));
+        em.persist(new Member(1L, "B"));
+
+        // [트랜잭션] 커밋
+        // 커밋하는 순간 데이터베이스에 INSERT SQL을 보냄
+        transaction.commit();
 
 
+    * 변경 감지(엔티티 수정)
+        ( doc > img > 변경 감지(엔티티 수정) 참조 )
+        영속 컨텍스트에서 엔티티와 스냅샷(처음의 엔티티)을 비교하여 UPDATE SQL을 "쓰기 지연 SQL 저장소"에 생성해둠
+            이후 "쓰기 지연 SQL 저장소" 에서 FLUSH, COMMIT 하여 DB에 반영
+
+        EntityManager em = emf. createEntityManager();
+        EntityTransaction transaction = em.getTransaction();
+        transaction.begin(); // [트랜잭션] 시작
+
+        // 영속 엔티티 조회
+        Member member = em.find(Member.class, 1L);
+        member.setUserName("C")
+
+        // em.update(member); 이런 코드가 없음
+        // em.persist(member); 이것도 사용하지 않음. 사용하지 않는것이 정답이라 함
+        // → JAVA Collection 처럼 다시 무언가 조치하지를 하지않음
+
+        transaction.commit(); // [트랜잭션] 커밋
 
 
+    * 엔티티 삭제
+        변경 감지 매커니즘과 동일
+
+        // 삭제 대상 엔티티 조회
+        Member member = em.find(Member.class, 1L);
+        // 엔티티 삭제
+        em.remove(member);
 
 
-
-
-
+    * 플러시
+        영속성 컨텍스트의 변경내용을 데이터베이스에 반영
 
 
 

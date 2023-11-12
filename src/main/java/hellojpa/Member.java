@@ -16,6 +16,14 @@ public class Member {
     @Column(name = "name") // 컬럼 이름 지정 가능
     private String userName;
 
+    // JPA는 기본적으로 내부에서 리플렉션 등 동적으로 객체를 생성해야 하기 때문에 기본 생성자가 있어야함
+    public Member() {}
+
+    public Member(Long id, String userName) {
+        this.id = id;
+        this.userName = userName;
+    }
+
     public Long getId() {
         return id;
     }
