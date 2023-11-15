@@ -54,6 +54,7 @@ import java.util.List;
  * <br>                     • -tcp는 TCP 서버 모드를 활성화
  * <br>                     • -tcpAllowOthers는 같은 네트워크 내의 다른 컴퓨터들이 서버에 접근할 수 있도록 허용,
  * <br>                        로컬 PC에서만 사용할 경우 이 옵션은 선택
+ * <br>                        (보안상의 이유로 필요한 경우에만 사용)
  * <br>                     • org.h2.tools.Server는 H2 서버 도구를 실행
  * <br>             persistence.xml 수정
  * <br>                 "jdbc:h2:~/test" → "jdbc:h2:tcp://192.168.1.101:9092/~/test"
