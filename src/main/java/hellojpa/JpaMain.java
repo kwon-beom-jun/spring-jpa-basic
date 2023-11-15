@@ -46,6 +46,18 @@ import java.util.List;
  * <br>         H2-DB.bat 사용하여 H2 콘솔을 사용 중 JPA를 사용하면 에러발생
  * <br>             → H2는 기본적으로 한번에 하나의 프로세스에서만 데이터베이스 파일에 접근 할 수 있도록 파일을 잠금
  * <br>             → 동시에 여러 프로세스가 데이터베이스 파일에 변경을 가할 때 데이터 손상을 방지하기 위함
+ * <br>         해결
+ * <br>             h2 > bin > h2.bat 실행 시 TCP 서버 모드로 실행하여 동시 사용
+ * <br>             h2.bat 수정
+ * <br>                 @java -cp "h2-2.2.224.jar;%H2DRIVERS%;%CLASSPATH%" org.h2.tools.Server -web -tcp -tcpAllowOthers
+ * <br>                     • -web는 H2 웹 콘솔을 시작, 웹 서버 모드에서 실행
+ * <br>                     • -tcp는 TCP 서버 모드를 활성화
+ * <br>                     • -tcpAllowOthers는 같은 네트워크 내의 다른 컴퓨터들이 서버에 접근할 수 있도록 허용,
+ * <br>                        로컬 PC에서만 사용할 경우 이 옵션은 선택
+ * <br>                     • org.h2.tools.Server는 H2 서버 도구를 실행
+ * <br>             persistence.xml 수정
+ * <br>                 "jdbc:h2:~/test" → "jdbc:h2:tcp://192.168.1.101:9092/~/test"
+ * <br>                 <property name="javax.persistence.jdbc.url" value="jdbc:h2:tcp://192.168.1.101:9092/~/test"/>
  * <br>
  * <br> TODO : 실행 시 콘솔(persistence.xml 옵션)
  * <br>     hibernate.showsql : 콘솔에 쿼리가 보임

@@ -41,7 +41,8 @@
             <property name="javax.persistence.jdbc.password" value=""/>
 
             <!-- DB url -->
-            <property name="javax.persistence.jdbc.url" value="jdbc:h2:~/test"/>
+            <!--<property name="javax.persistence.jdbc.url" value="jdbc:h2:~/test"/>-->
+            <property name="javax.persistence.jdbc.url" value="jdbc:h2:tcp://192.168.1.101:9092/~/test"/>
 
             <!-- DB Dialect 설정 -->
             <!-- 특정 데이터베이스에 종속되지 않는 역할 -->
