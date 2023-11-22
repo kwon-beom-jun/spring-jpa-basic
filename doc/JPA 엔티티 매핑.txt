@@ -59,17 +59,52 @@
                 예시) <property name="hibernate.hbm2ddl.auto" value="create"/>
             create-drop : create와 같으나 종료시점에 테이블 DROP
             update : 변경분만 반영(운영DB에는 사용하면 안됨)
+                ex) 기존 MEMBER DB 테이블에 id, name만 존재하는데 매핑되는 Member Entity에 age 필드를
+                    추가하여 실행하면 alter table해서 기존 테이블에 age를 추가해줌
+                ※ 반대로 기존 Member DB 테이블에 age 컬럼이 있고 Entity에 age 필드가 없는 상태로 구동하면
+                   아무일도 일어나지 않음 (만약 DB Member age 컬럼이 not null 이면 insert 하다가 에러발생)
             validate : 엔티티와 테이블이 정상 매핑되었는지만 확인
-            none : 사용하지 않음
+                ex) Entity에 DB에 매핑되는 컬럼이 없으면 에러발생 (update는 DB에 컬럼이 없어도 에러가 발생하지 않음)
+            none : 사용하지 않음 (주석도 가능), 사실상 없는 속성값이고 아무거나 넣는거랑 같은것
+                ex) none을 넣어도 되고 abcabc 이런식으로 아무거나 넣어도 가능하지만 관례상 none을 넣음
+
+        방언에 따라서 적절한 데이터베이스에 맞게 해석
+            ex) <property name="hibernate.dialect" value="org.hibernate.dialect.Oracle12cDialect"/> 이고,
+                <property name="hibernate.hbm2ddl.auto" value="create"/> 일때,
+                Oracle String의 기본 컬럼 타입은 varchar2여서 varchar2로 생성됨
+
+    ※ 운용 장비에는 절대로 create, create-drop, update를 사용하면 안됨!!!
+      (근본적으로 맵 어플리케이션 계정은 alter나 drop을 못하도록 계정 자체를 분리하는게 맞음)
+        개발 초기 로컬 : create, update
+        테스트와 개발 서버 : update, validate (강사님은 테스트, 개발 서버에서도 가급적 사용하는거 권장하지 않음)
+            - 데이터가 몇 천만건 있는 상태에서 alter을 잘못 치거나 하면 시스템이 중단 상태가 될 수도 있음,
+              애플리케이션 로딩 시점에 시스템이 자동으로 alter을 쳐준다는것은 굉장히 위험
+              → 그래서 직접 만든 스크립트를 테스트 db에다가 직접 테스트해서 반영해보고 DBA분에게 전달하거나
+                검수받고 적용하는것을 권장
+        스테이징과 운영 서버 : validate, none
+
+    ※ TIP
+        JPA가 만들어주는 Script(콘솔 로그 스크립트)를 활용하여 다듬어서(회사 룰이 있다면 회사 룰에 맞춰서)
+        꼼꼼히 확인 후 사용
 
 
+    DDL 생성 기능
+        JPA가 실행될 떄 어노테이션을 보고 런타임이 바뀌지는 않음,
+        애플리케이션 실행 자체에 영향을 주지 않고 데이터베이스에 영향을 주는것으로 DDL 생성해주는것만 도와주는 역할
+        JPA의 어떤 실행 매커니즘 자체에 영향을 주지는 않음
+        ↔ @Table(name = "MBR") 이런 테이블 명을 변경하는것은 런타임에 영향(insert, update 쿼리 등)을 줌
 
+        - 제약조건 추가
+            lenth는 ddl 생성 기능인데 약간 validation 하는 경우도 있음
+            ex) 회원 이름은 필수, 10자 초과 X
+                @Column(nullable = false, length = 10)
+                private userName;
 
+        - 유니크 제약조건 추가
+            @Table(uniqueConstraints =
+                {@UniqueConstraint( name = "NAME_AGE_UNIQUE", columnNames = {"NAME", "AGE"} )})
 
-
-
-
-
+        - DDL 생성 기능은 DDL을 자동 생성할 때만 사용되고, JPA의 실행 로직에는 영향을 주지 않는다
 
 
 
