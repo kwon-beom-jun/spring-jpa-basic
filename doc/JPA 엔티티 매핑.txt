@@ -108,19 +108,81 @@
 
 
 
+3. 필드와 컬럼 매핑
+
+    요구사항 추가 ( JpaFldColMain.class )
+        1. 회원은 일반 회원과 관리자로 구분해야 한다.
+        2. 회원 가입일과 수정일이 있어야 한다.
+        3. 회원을 설명할 수 있는 필드가 있어야 한다. 이 필드는 길이 제한이 없다
+
+        @Column : 컬럼 매핑
+        @Temporal : 날짜 타입 매핑
+        @Enumerated : enum 타입 매핑
+        @Lob : BLOB, CLOB 매핑
+        @Transient : 특정 필드를 컬럼에 매핑하지 않음(매핑 무시)
 
 
+        @Column
+            name : 필드와 매핑할 테이블의 컬럼 이름 (default : 객체의 필드 이름)
+            insertable, updatable : 등록, 변경 가능 여부 (default : TRUE)
+                                    해당 컬럼을 수정했을때 DB에 insert, update를 반영할건지 여부
+            nullable(DDL) : null 값의 허용 여부를 설정한다. false로 설정하면 DDL 생성 시에 not null 제약조건이 붙는다.
+            unique(DDL) : @Table의 uniqueConstraints와 같지만 한 컬럼에 간단히 유니크 제약조건을 걸 때 사용한다.
+                          잘 사용하지 않음 (이름이 랜덤으로 지정되어 운영에서 이름이 명시적이지 못해 잘 사용하지 않음)
+                            → 클래스 @Table에 유니크 제약조건 "uniqueConstraints"를 줄 수 있고 이름도 지정 가능
+            columnDefinition(DDL) : 데이터베이스 컬럼 정보를 직접 줄 수 있다.
+                                    (default : 필드의 자바 타입과 방언 정보를 사용해서 적절한 컬럼 타입)
+                                    ex) varchar(100) default ‘EMPTY'
+            length(DDL) : 문자 길이 제약조건, String 타입에만 사용한다. (default : 255)
+            precision, scale(DDL) :  BigDecimal 타입에서 사용한다(BigInteger도 사용할 수 있다).
+                                     precision은 소수점을 포함한 전체 자 릿수를, scale은 소수의 자릿수
+                                     다. 참고로 double, float 타입에는 적용되지 않는다. 아주 큰 숫자나
+                                     정 밀한 소수를 다루어야 할 때만 사용한다.
+                                     (default : precision=19, scale=2)
 
 
+        @Enumerated
+            자바 enum 타입을 매핑할 때 사용
+            ※ 주의! ORDINAL 사용 X
+               → 처음 enum 안에 A, B가 있고 DB 컬럼 값으로는 0, 1로 들어가는데 이후 추가로 C, A, B로
+                 C를 enum에 추가하게 된다면 테이블을 drop하고 다시 만들지 않는 이상 기존의 A는 0으로 잡혀있고
+                 이후 A는 1로, C는 0으로 들어가는 상황이 발생한다.
+
+            • EnumType.ORDINAL(default) : enum 순서를 데이터베이스에 저장,
+                                          기본적으로 숫자가 들어가서 숫자타입의 컬럼 생성
+            • EnumType.STRING : enum 이름을 데이터베이스에 저장
 
 
+        @Temporal
+            날짜 타입(java.util.Date, java.util.Calendar)을 매핑할 때 사용
+            ※ 옛날은 필요했지만 지금은 필요 없음. Java8 이후 LocalDate, LocalDateTime(=TIMESTAMP)이 들어옴
+               java.time.LocalDate, java.time.LocalDateTime을 사용할 때는 생략 가능 (최신 하이버네이트 지원)
+               LocalDate 연월, LocalDateTime 연월일
+
+            • TemporalType.DATE: 날짜, 데이터베이스 date 타입과 매핑
+              (예: 2013–10–11)
+            • TemporalType.TIME: 시간, 데이터베이스 time 타입과 매핑
+              (예: 11:11:11)
+            • TemporalType.TIMESTAMP: 날짜와 시간, 데이터베이스 timestamp 타입과 매핑
+              (예: 2013–10–11 11:11:11)
 
 
+        @Lob
+            데이터베이스 BLOB, CLOB 타입과 매핑
+
+            • @Lob에는 지정할 수 있는 속성이 없다.
+            • 매핑하는 필드 타입이 문자면 CLOB 매핑, 나머지는 BLOB 매핑
+                CLOB: String, char[], java.sql.CLOB
+                BLOB: byte[], java.sql. BLOB
 
 
+        @Transient
+            • 필드 매핑X
+            • 데이터베이스에 저장X, 조회X
+            • 주로 메모리상에서만 임시로 어떤 값을 보관하고 싶을 때 사용
 
-
-
+             ex) @Transient
+                 private Integer temp;
 
 
 
